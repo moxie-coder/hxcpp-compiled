@@ -134,14 +134,26 @@ class BuildTool
       m64 = mDefines.exists("HXCPP_M64");
       m32 = mDefines.exists("HXCPP_M32");
       arm64 = mDefines.exists("HXCPP_ARM64");
-      if (m64==m32 && !arm64)
+      var otherArmArchitecture = mDefines.exists("HXCPP_ARMV6") || mDefines.exists("HXCPP_ARMV7") || mDefines.exists("HXCPP_ARMV7S");
+      if (m64==m32 && !arm64 && !otherArmArchitecture)
       {
-         var arch = getArch();
+         var arch = mDefines.get("HXCPP_ARCH");
+         if (arch!=null)
+         {
+            m64 = arch=="x86_64";
+            m32 = arch=="x86";
+            arm64 = arch=="arm64";
+         }
+         else
+         {
+            var hostArch = getArch();
 
-         // Default to the current OS version.  windowsArm runs m32 code too
-         m64 = arch=="m64";
-         m32 = arch=="m32";
-         arm64 = arch=="arm64";
+            // Default to the current OS version.  windowsArm runs m32 code too
+            m64 = hostArch=="m64";
+            m32 = hostArch=="m32";
+            arm64 = hostArch=="arm64";
+         }
+
          mDefines.remove(m32 ? "HXCPP_M64" : "HXCPP_M32");
          set64(mDefines,m64,arm64);
       }
@@ -888,6 +900,7 @@ class BuildTool
                case "objcflag" : c.mOBJCFlags.push(substitute(el.att.value));
                case "rcflag" : c.mRcFlags.push( substitute((el.att.value)) );
                case "mmflag" : c.mMMFlags.push(substitute(el.att.value));
+               case "asmflag" : c.mAsmFlags.push(substitute(el.att.value));
                case "pchflag" : c.mPCHFlags.push(substitute(el.att.value));
                case "objdir" : c.mObjDir = substitute((el.att.value));
                case "outflag" : c.mOutFlag = substitute((el.att.value));
@@ -895,6 +908,7 @@ class BuildTool
                case "rcexe" : c.mRcExe = substitute((el.att.name));
                case "rcext" : c.mRcExt = substitute((el.att.value));
                case "ext" : c.mExt = substitute((el.att.value));
+               case "asmExe" : c.mAsmExe = substitute((el.att.value));
                case "pch" : c.setPCH( substitute((el.att.value)) );
                case "getversion" : c.mGetCompilerVersion = substitute((el.att.value));
                case "section" : createCompiler(el,c);
